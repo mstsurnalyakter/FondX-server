@@ -1,229 +1,141 @@
-# **Project Setup and Configuration Guide**
+# FoundX — Lost & Found Web App
 
-## **Description**
+FoundX is a full‑stack Lost & Found application. Frontend is a Next.js + TypeScript app (client folder) and the backend is an Express + TypeScript API (server folder). This README explains how to run, build, and deploy both parts, plus required environment variables (including Meilisearch).
 
-This guide provides a detailed step-by-step process to clone, install, configure, and run the project. It covers everything from setting up environment variables, including database URI, Cloudinary account, and Gmail app password, to running the project in development and production modes. Follow these instructions to seamlessly get your project up and running.
+## Contents
+- Overview
+- Features
+- Tech stack
+- Repo layout
+- Quick start (local)
+- Environment variables (.env examples)
+- Meilisearch notes
+- Postman collection
+- Deployment (Vercel for frontend + recommended for backend)
+- Troubleshooting & tips
+- License
 
----
+## Overview
+FoundX lets users post found items with images, answer verification questions, submit claim requests, and search items. The frontend is in `FoundX-Client`, backend in `FoundX-Server`.
 
-# Installation Guide
+## Features
+- User auth (JWT + refresh)
+- Item CRUD with image upload (Cloudinary)
+- Claim request workflow
+- Full‑text search (Meilisearch)
+- Social sharing + native share
+- Responsive UI (Tailwind CSS + HeroUI)
+- Deployed frontend on Vercel (recommended)
 
-## **1. Clone the Project Repository**
+## Tech stack
+- Frontend: Next.js (App Router), React, TypeScript, Tailwind CSS, HeroUI, React Query
+- Backend: Node.js, Express, TypeScript, MongoDB, Meilisearch, Cloudinary
+- Dev/deploy: Vercel (frontend), Render/Heroku/VM (backend), Postman for API testing
 
-First, you need to clone the project repository from your version control platform (e.g., GitHub, GitLab).
+## Repo layout
+- FoundX-Client/ — Next.js frontend
+- FoundX-Server/ — Express API + TypeScript
+- README.md — this file
+- FoundX-Server/FoundX.postman_collection.json — Postman collection
 
-Open your terminal and execute the following command:
+## Quick start (local)
 
+Prereqs:
+- Node 18+
+- yarn or npm
+- MongoDB instance (local or Atlas)
+- Meilisearch instance (optional for search)
+- Cloudinary account (optional for image uploads)
+
+Server
 ```bash
-git clone <repository-url>
-```
-
-Replace `<repository-url>` with the actual URL of your repository.
-
-## **2. Navigate to the Project Directory**
-
-Once the repository is cloned, navigate to the project directory:
-
-```bash
-cd project-name
-```
-
-Replace `project-name` with the name of the directory created by the `git clone` command.
-
-## **3. Install All Packages**
-
-Next, install all the required dependencies listed in the `package.json` file. You can use either Yarn or npm:
-
-With **Yarn**:
-
-```bash
+cd FoundX-Server
 yarn install
+# create .env (see sample below)
+yarn dev        # development with ts-node-dev
+yarn build      # compile to dist
+yarn start      # run compiled server
 ```
 
-Or with **npm**:
-
+Client
 ```bash
-npm install
+cd FoundX-Client
+yarn install
+# create .env.local (see sample below)
+yarn dev        # run Next.js dev server
+yarn build      # production build
+yarn start      # run build locally
 ```
 
-This command will install all the necessary packages.
+## Environment variables
 
-## **4. Configure Environment Variables**
-
-### **4.1 Rename the `.env.example` File**
-
-The project includes an `.env.example` file that contains example environment variables. Rename this file to `.env`:
-
-```bash
-mv .env.example .env
+FoundX-Server (.env)
+```text
+PORT=5000
+MONGO_URI=
+JWT_SECRET=your_jwt_secret
+REFRESH_TOKEN_SECRET=your_refresh_secret
+CLOUDINARY_CLOUD_NAME=...
+CLOUDINARY_API_KEY=...
+CLOUDINARY_API_SECRET=...
+MEILISEARCH_HOST=https://xxx.meilisearch.io
+MEILISEARCH_API_KEY=your_meili_key
 ```
 
-This will create a `.env` file where you will store your actual environment variables.
-
-### **4.2 Retrieve the MongoDB Connection URI**
-
-Since you already have a MongoDB cluster and user set up, retrieve the connection string from MongoDB Atlas:
-
-1. **Log in to MongoDB Atlas:**
-   - Go to [MongoDB Atlas](https://www.mongodb.com/cloud/atlas) and log in with your credentials.
-
-2. **Select Your Cluster:**
-   - Once logged in, you’ll see your clusters on the dashboard. Click on the cluster you’ve already created.
-
-3. **Connect to Your Cluster:**
-   - On the cluster page, click the "Connect" button.
-
-4. **Choose a Connection Method:**
-   - Select **"Connect your application."**
-
-5. **Select Driver and Version:**
-   - Ensure the "Driver" dropdown is set to **"Node.js"** and the version is appropriate.
-
-6. **Copy the Connection String:**
-   - MongoDB Atlas will display a connection string like this:
-
-   ```plaintext
-   mongodb+srv://<username>:<password>@cluster0.xxxxx.mongodb.net/<dbname>?retryWrites=true&w=majority
-   ```
-
-7. **Replace Placeholders in the Connection String:**
-   - Replace `<username>` with your MongoDB username.
-   - Replace `<password>` with your MongoDB user's password.
-   - Replace `<dbname>` with the name of the database you want to connect to.
-
-   For example:
-
-   ```plaintext
-   mongodb+srv://admin:Admin123456@cluster0.xxxxx.mongodb.net/lost-and-found?retryWrites=true&w=majority
-   ```
-
-8. **Add the Database URI to Your `.env` File**
-
-   Open the `.env` file in the project root and add the following line:
-
-   ```bash
-   DB_URL=mongodb+srv://admin:Admin123456@cluster0.xxxxx.mongodb.net/lost-and-found?retryWrites=true&w=majority
-   ```
-
-   Replace the URI with your actual MongoDB connection string.
-
-### **4.3 Set Up Cloudinary Account and Credentials**
-
-Cloudinary is used for managing and delivering images. To set it up:
-
-1. Visit [Cloudinary](https://cloudinary.com/).
-2. Sign up or log in to your account.
-3. Go to the Cloudinary Dashboard.
-4. Note down your `Cloud Name`, `API Key`, and `API Secret`.
-
-Add these credentials to your `.env` file:
-
-```bash
-CLOUDINARY_CLOUD_NAME=<your-cloud-name>
-CLOUDINARY_API_KEY=<your-api-key>
-CLOUDINARY_API_SECRET=<your-api-secret>
+FoundX-Client (.env.local)
+```text
+NEXT_PUBLIC_BACKEND_URL=https://api.your-backend.com/api/v1
+NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET=...
+NEXT_PUBLIC_MEILISEARCH_HOST=https://xxx.meilisearch.io
+# any other NEXT_PUBLIC_* variables required by client
 ```
 
-Replace `<your-cloud-name>`, `<your-api-key>`, and `<your-api-secret>` with your Cloudinary account details.
+Important: The client needs NEXT_PUBLIC_BACKEND_URL (or envConfig.backendURL) during build to avoid prerender errors like `Failed to parse URL from undefined/...`.
 
-### **4.4 Set Up Gmail App Password**
+## Meilisearch
+- Configure MEILISEARCH_HOST and MEILISEARCH_API_KEY on the server.
+- Create an index named `items` and tune searchable attributes (title, description, location).
+- Index documents after item create/update/delete (server-side hook).
 
-To send emails through your Gmail account, you need to generate an app password:
-
-1. Go to your [Google Account Security Settings](https://myaccount.google.com/security).
-2. Under "Signing in to Google," enable 2-Step Verification.
-3. Once 2-Step Verification is enabled, go back to the Security page and click on "App passwords."
-4. Select "Mail" as the app and your device type, then generate the app password.
-5. Copy the generated password.
-
-Add your Gmail credentials to the `.env` file:
-
-```bash
-SENDER_EMAIL=<your-email>
-SENDER_APP_PASS=<your-app-password>
+Basic server client example:
+```ts
+import { MeiliSearch } from "meilisearch";
+const meili = new MeiliSearch({ host: process.env.MEILISEARCH_HOST, apiKey: process.env.MEILISEARCH_API_KEY });
+await meili.index('items').addDocuments([...]);
 ```
 
-Replace `<your-email>` with your Gmail address and `<your-app-password>` with the app password you generated.
+## Postman
+Import `FoundX-Server/FoundX.postman_collection.json`. Update the `BASE_API` variable to your server URL (e.g. `http://localhost:5000/api/v1`).
 
-### **4.5 Add Remaining Environment Variables**
+## Deployment
 
-Complete your `.env` file with the following variables:
+Frontend (Vercel)
+- Connect the `FoundX-Client` repo to Vercel, set Root Directory to `FoundX-Client` if needed.
+- Add env vars in Project → Settings (NEXT_PUBLIC_BACKEND_URL, etc.).
+- Build Command: `yarn build` (Next auto-detected).
+- Deploy.
 
-```bash
-NODE_ENV=development
-PORT=3000
-BCRYPT_SALT_ROUNDS=12
-JWT_ACCESS_SECRET=secret
-JWT_ACCESS_EXPIRES_IN=7d
-JWT_REFRESH_SECRET=refreshsecret
-JWT_REFRESH_EXPIRES_IN=1y
-ADMIN_EMAIL=admin@gmail.com
-ADMIN_PASSWORD=123456
-ADMIN_MOBILE_NUMBER=1234567890
-ADMIN_PROFILE_PHOTO=https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_960_720.png
-```
+Backend
+- Deploy to Render / Heroku / your preferred host.
+- Ensure environment variables are configured on the host (MONGO_URI, Cloudinary, Meilisearch keys, JWT secrets).
+- If you deploy serverless (Vercel functions), adapt routes accordingly.
 
-## **5. Run the Project**
+## Troubleshooting & tips
+- Tailwind: ensure `postcss.config.js` uses `@tailwindcss/postcss` (install `@tailwindcss/postcss` + `autoprefixer`) for newer Tailwind/PostCSS setups.
+- Prerender error: set NEXT_PUBLIC_BACKEND_URL to avoid `Failed to parse URL from undefined/...`.
+- Edge runtime warnings: libraries like axios may use Node APIs; avoid importing them in Edge-compiled serverless functions.
+- If global CSS not applied, ensure `src/app/layout.tsx` imports `./globals.css` and layout is a server component.
 
-After setting up the environment variables, you can run the project.
+## Contributing
+- Fork → new branch → PR.
+- Run linter/formatter and tests (if added).
+- Keep envs out of the repo; include `.env.example` only.
 
-### **5.1 Run in Development Mode**
+## License
+MIT
 
-To start the project in development mode, run:
-
-With **Yarn**:
-
-```bash
-yarn dev
-```
-
-Or with **npm**:
-
-```bash
-npm run dev
-```
-
-This will start the development server with hot-reloading enabled.
-
-### **5.2 Run in Production Mode**
-
-To start the project in production mode:
-
-1. **Build the Project:**
-
-   With **Yarn**:
-
-   ```bash
-   yarn build
-   ```
-
-   Or with **npm**:
-
-   ```bash
-   npm run build
-   ```
-
-2. **Start the Server:**
-
-   With **Yarn**:
-
-   ```bash
-   yarn start
-   ```
-
-   Or with **npm**:
-
-   ```bash
-   npm start
-   ```
-
-## **6. Access the Application**
-
-Once the server is running, you can access the application in your browser by visiting:
-
-```bash
-http://localhost:5000
-```
-
-This guide should help you set up, configure, and run your project seamlessly. If you encounter any issues or need further assistance, feel free to ask!
-# FondX-server
+## Contact
+Repository links — :
+- Live Link: https://foundx-item.vercel.app
+- Backend GitHub : https://github.com/mstsurnalyakter/FondX-server
+- Frontend GitHub: https://github.com/mstsurnalyakter/FoundX-Client
